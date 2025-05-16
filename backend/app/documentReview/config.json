@@ -1,0 +1,16 @@
+{
+  "provider": "openai",
+  "openai": {
+    "api_key": "sk-kwmzlwamflklwslrcyunnvyuqveuuzesljlsjktnipekossw",
+    "base_url": "https://api.siliconflow.cn/v1/chat/completions",
+    "model_name": "THUDM/GLM-4-32B-0414"
+  },
+  "ollama": {
+    "base_url": "http://localhost:11434",
+    "model_name": "llama3"
+  },
+  "model_params": {
+    "temperature": 0.1,
+    "max_tokens": 2000
+  }
+}

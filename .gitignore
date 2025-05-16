@@ -1,0 +1,29 @@
+# 忽略前端依赖和构建目录
+frontend_vue/node_modules/
+frontend_vue/dist/
+
+# Python相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+ENV/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器/IDE配置
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志和临时文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tmp
