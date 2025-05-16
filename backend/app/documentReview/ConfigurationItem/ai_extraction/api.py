@@ -163,3 +163,117 @@ def call_ollama_api(prompt, model="llama3", temperature=0.2, max_tokens=2000):
     extracted_requirements = result.get("requirements", [])
     
     return result.get("response", "")
+
+
+def register_ai_extraction_apis(app, upload_folder):
+    """
+    注册AI需求提取相关的API，只保留直接提取需求功能
+    Args:
+        app: Flask应用实例
+        upload_folder: 上传文件夹路径
+    """
+    from flask import jsonify, request
+    import logging
+    import uuid
+    from datetime import datetime
+    import os
+    import json
+
+    @app.route('/api/requirement_candidates', methods=['POST'])
+    def ai_extract_api():
+        """
+        AI直接提取文档中的所有需求
+        JSON参数:
+            file_id: 文件ID
+            file_name: 文件名
+            model: 可选，使用的AI模型名称
+        返回:
+            提取的需求列表 {session_id, requirements: [{name, chapter, content}, ...]}
+        """
+        try:
+            data = request.json
+            file_id = data.get('file_id')
+            file_name = data.get('file_name')
+            model = data.get('model')
+            if not file_id or not file_name:
+                return jsonify({'success': False, 'error': '缺少必要参数'}), 400
+            # 构建文件路径
+            file_path = os.path.join(upload_folder, file_id)
+            if not os.path.exists(file_path):
+                return jsonify({'success': False, 'error': '文件不存在'}), 404
+            logging.info(f"正在使用AI提取文档需求: {file_name} ({file_id})")
+            # 创建会话ID
+            session_id = str(uuid.uuid4())
+            # 直接提取所有需求
+            from .extractor import ai_extract_requirements
+            requirements_data = ai_extract_requirements(file_path, model)
+            # 处理提取结果
+            requirements = []
+            if isinstance(requirements_data, list):
+                for req in requirements_data:
+                    if isinstance(req, dict):
+                        name = req.get("name", req.get("title", ""))
+                        chapter = req.get("chapter", req.get("chapter_number", ""))
+                        content = req.get("content", "")
+                        # 处理内容字段
+                        if isinstance(content, dict):
+                            content_str = ""
+                            if 'b' in content:  # 基本描述
+                                content_str += content['b'] + "\n\n"
+                            if 'c' in content:  # 条件
+                                content_str += f"进入条件: {content['c']}\n\n"
+                            if 'd' in content:  # 输入
+                                content_str += f"输入: {content['d']}\n\n"
+                            if 'e' in content:  # 输出
+                                content_str += f"输出: {content['e']}\n\n"
+                            if 'f' in content:  # 处理
+                                content_str += f"处理: {content['f']}\n\n"
+                            if 'g' in content:  # 性能
+                                content_str += f"性能: {content['g']}\n\n"
+                            if 'h' in content:  # 限制
+                                content_str += f"约束与限制: {content['h']}"
+                        elif isinstance(content, str):
+                            content_str = content
+                        else:
+                            content_str = str(content)
+                        if not content_str.strip():
+                            content_str = f"需求: {name}" if name else "未提取到需求内容"
+                        requirements.append({
+                            "name": name,
+                            "chapter": chapter,
+                            "content": content_str
+                        })
+                    elif isinstance(req, str):
+                        requirements.append({
+                            "name": f"需求_{len(requirements)+1}",
+                            "chapter": "",
+                            "content": req
+                        })
+            if not requirements:
+                logging.warning(f"没有从文件 {file_name} 中提取到需求")
+                return jsonify({
+                    'success': False, 
+                    'error': '未提取到需求，请检查文档格式或内容'
+                }), 400
+            # 记录处理结果
+            result_folder = os.path.join(upload_folder, 'results')
+            os.makedirs(result_folder, exist_ok=True)
+            result_path = os.path.join(result_folder, f"{session_id}.json")
+            with open(result_path, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'session_id': session_id,
+                    'file_id': file_id,
+                    'file_name': file_name,
+                    'requirements': requirements,
+                    'timestamp': datetime.now().isoformat()
+                }, f, ensure_ascii=False, indent=2)
+            logging.info(f"配置项测试需求提取完成，共找到 {len(requirements)} 个需求")
+            return jsonify({
+                'success': True,
+                'session_id': session_id,
+                'requirements': requirements
+            })
+        except Exception as e:
+            logging.exception(f"配置项测试提取需求出错: {str(e)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+    return app

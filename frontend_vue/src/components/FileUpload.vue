@@ -145,17 +145,12 @@ async function uploadFile() {
     });
     
     console.log('上传文件成功，响应数据:', response.data);
-    const data = response.data;
-    fileName.value = data.file_name;
+    fileName.value = response.data.file_name;
     
     showStatus('文件上传成功', 'success');
     
     // 通知父组件上传成功
-    emit('upload-success', {
-      fileId: data.file_id,
-      fileName: data.file_name,
-      fileExt: data.ext || '.docx'  
-    });
+    emit('upload-success', response.data);
   } catch (error) {
     console.error('上传出错: ', error);
     let errorMessage = '文件上传失败';

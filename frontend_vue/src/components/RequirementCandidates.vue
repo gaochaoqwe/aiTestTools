@@ -1,29 +1,48 @@
 <template>
   <section class="candidates-section">
-    <h2>第三步：选择需求名称</h2>
+    <h2>第二步：AI提取需求</h2>
     
-    <div class="catalog-actions">
-      <div class="ai-catalog-option">
-        <h3>自动生成目录</h3>
-        <div class="requirement-level">
-          <label>需求级别：</label>
-          <select v-model="requirementLevel">
-            <option value="3">3级 (如 3.2.1)</option>
-            <option value="4">4级 (如 3.2.1.1)</option>
-            <option value="5">5级 (如 3.2.1.1.1)</option>
-          </select>
-        </div>
-        <button 
-          class="btn secondary-btn" 
-          @click="extractCatalogWithAI" 
-          :disabled="loading"
-        >
-          使用AI提取需求目录
-        </button>
+    <div class="ai-extract-panel">
+      <div v-if="!extractStarted" class="ai-extract-intro">
+        <h3>开始需求提取</h3>
         <p class="info-text">
           <span class="info-icon">ℹ️</span>
-          AI将使用输入的规格说明文档自动提取需求目录，无需手动上传目录文件。仅会提取第3章的功能需求。
+          AI将分析您上传的规格说明文档，自动提取需求目录并生成详细需求内容。点击下方按钮开始提取。
         </p>
+        <div class="extraction-settings">
+          <div class="requirement-level">
+            <label>需求级别：</label>
+            <select v-model="requirementLevel">
+              <option value="3">3级 (如 3.2.1)</option>
+              <option value="4">4级 (如 3.2.1.1)</option>
+              <option value="5">5级 (如 3.2.1.1.1)</option>
+            </select>
+          </div>
+          <div class="extraction-method-select">
+            <label>提取方式：</label>
+            <div class="radio-options">
+              <div class="radio-option">
+                <input type="radio" id="ai-extract" value="ai" v-model="extractionMethod" checked>
+                <label for="ai-extract">AI智能提取（推荐）</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button 
+          class="btn primary-btn start-extract-btn" 
+          @click="startAIExtraction" 
+          :disabled="loading"
+        >
+          {{ loading ? '正在准备AI提取...' : '开始AI需求提取' }}
+        </button>
+      </div>
+      
+      <div v-if="extracting" class="extraction-progress">
+        <div class="progress-indicator">
+          <div class="spinner"></div>
+          <h3>正在提取需求中...</h3>
+          <p>该过程可能需要几分钟时间，请耐心等待</p>
+        </div>
       </div>
     </div>
     
@@ -119,14 +138,6 @@ import { ref, computed, onMounted } from 'vue';
 import StatusMessage from './StatusMessage.vue';
 
 const props = defineProps({
-  candidates: {
-    type: Array,
-    required: true
-  },
-  sessionId: {
-    type: String,
-    required: true
-  },
   fileId: {
     type: String,
     required: true
@@ -135,13 +146,9 @@ const props = defineProps({
     type: String,
     required: true
   },
-  catalogFileId: {
+  fileExt: {
     type: String,
-    required: true
-  },
-  catalogFileName: {
-    type: String,
-    required: true
+    default: '.docx'
   },
   apiService: {
     type: Object,
@@ -149,32 +156,26 @@ const props = defineProps({
   }
 });
 
-// 调试查看传入的candidates内容
-onMounted(() => {
-  console.log('RequirementCandidates组件接收到候选项：', props.candidates);
-  console.log('会话ID：', props.sessionId);
-  console.log('文件ID:', props.fileId);
-  console.log('目录文件ID:', props.catalogFileId);
-});
+const emit = defineEmits(['extract-complete']);
 
-const emit = defineEmits(['extract-complete', 'update-candidates']);
-
-// 状态变量
+// 需求数据
+const candidates = ref([]);
 const selectedRequirements = ref([]);
+
+// 状态相关
 const statusMsg = ref('');
-const statusType = ref('');
+const statusType = ref('info');
 const statusVisible = ref(false);
 const loading = ref(false);
-const extractionMethod = ref('traditional'); // 默认使用传统算法
+const extracting = ref(false);
+const extractStarted = ref(false);
+const extractionMethod = ref('ai'); // 默认使用AI算法
 const requirementLevel = ref('3'); // 需求级别，默认为3级
 
 // 用于显示的需求候选项列表
 const displayCandidates = computed(() => {
-  console.log('计算displayCandidates，数据源长度:', props.candidates.length);
-  if (Array.isArray(props.candidates)) {
-    return props.candidates;
-  }
-  return [];
+  console.log('计算displayCandidates，数据源长度:', candidates.value.length);
+  return candidates.value;
 });
 
 // 计算属性：是否全选
@@ -207,23 +208,19 @@ const extractRequirements = async () => {
     
     // 确保所有必需参数存在
     console.log('参数检查:', {
-      sessionId: props.sessionId,
       fileId: props.fileId,
       fileName: props.fileName,
-      catalogFileId: props.catalogFileId,
-      catalogFileName: props.catalogFileName,
       extractionMethod: extractionMethod.value
     });
     
     let missingParams = [];
-    if (!props.sessionId) missingParams.push('会话ID');
     if (!props.fileId) missingParams.push('文件ID');
     
     if (missingParams.length > 0) {
       throw new Error(`缺少必要参数: ${missingParams.join(', ')}，无法执行提取操作`);
     }
     
-    console.log('使用会话ID:', props.sessionId);
+    console.log('使用文件ID:', props.fileId);
     console.log('使用提取方法:', extractionMethod.value);
     
     try {
@@ -244,9 +241,7 @@ const extractRequirements = async () => {
         data = await props.apiService.extractRequirements(
           props.fileId, 
           props.fileName, 
-          selectedNames, 
-          props.catalogFileId, 
-          props.catalogFileName
+          selectedNames
         );
       }
       
@@ -289,8 +284,7 @@ const extractRequirements = async () => {
       console.log('处理后的需求数据示例:', JSON.stringify(processedRequirements[0]));
       
       emit('extract-complete', {
-        extractedRequirements: processedRequirements,
-        sessionId: data.session_id
+        extractedRequirements: processedRequirements
       });
       
       statusMsg.value = `成功提取${processedRequirements.length}个需求内容`
@@ -309,58 +303,71 @@ const extractRequirements = async () => {
   }
 };
 
-// AI自动提取目录
-const extractCatalogWithAI = async () => {
-  if (!props.fileId || !props.fileName) {
-    showStatus('缺少必要的文件参数', 'error');
+// 开始AI提取需求
+async function startAIExtraction() {
+  if (!props.fileId) {
+    showStatus('请先上传文档文件', 'error');
     return;
   }
   
   loading.value = true;
-  showStatus('AI正在从文档中提取需求目录，这可能需要一分钟左右...', 'info');
+  extractStarted.value = true;
+  extracting.value = true;
+  showStatus('正在使用AI提取需求，这可能需要几分钟时间...', 'info');
   
   try {
-    // 调用AI目录提取API
-    const response = await props.apiService.extractCatalogWithAI(
-      props.fileId, 
-      props.fileName, 
-      parseInt(requirementLevel.value)
-    );
+    console.log('开始AI提取，文件ID:', props.fileId);
     
-    if (response && response.requirements) {
-      // 触发事件，将提取到的目录发送给父组件
-      emit('update-candidates', response.requirements);
+    // 先清空之前的数据
+    candidates.value = [];
+    selectedRequirements.value = [];
+    
+    // 调用AI提取需求接口
+    const response = await props.apiService.extractRequirementsWithAI({
+      file_id: props.fileId,
+      file_name: props.fileName,
+      requirement_level: parseInt(requirementLevel.value)
+    });
+    
+    console.log('AI需求提取响应:', response);
+    
+    if (response.success || response.requirements) {
+      // 如果返回了需求数据
+      const requirements = response.requirements || [];
       
-      // 打印日志以便调试
-      console.log('收到需求数据:', response.requirements);
-      console.log('当前candidates:', props.candidates);
-      
-      // 检查requirements中是否有数据
-      if (response.requirements.length > 0) {
-        // 清空当前列表
-        while (props.candidates.length > 0) {
-          props.candidates.pop();
-        }
-        
-        // 添加新数据
-        response.requirements.forEach(item => {
-          props.candidates.push(item);
+      if (requirements.length > 0) {
+        // 将提取到的需求添加到候选列表
+        requirements.forEach(req => {
+          // 确保level字段存在
+          if (req.level === undefined && req.chapter) {
+            req.level = req.chapter.split('.').length;
+          }
+          candidates.value.push(req);
+          
+          // 默认选中所有需求
+          selectedRequirements.value.push(req);
         });
         
-        console.log('更新后的candidates:', props.candidates);
+        showStatus(`AI成功提取到 ${requirements.length} 个需求`, 'success');
+      } else {
+        showStatus('未能提取到需求，请检查文档格式', 'warning');
       }
-      
-      showStatus(`AI成功提取到 ${response.requirements.length} 个需求条目`, 'success');
     } else {
-      showStatus('未能提取到需求目录，请检查文档格式', 'warning');
+      showStatus('AI提取需求失败: ' + (response.error || '未知错误'), 'error');
     }
   } catch (error) {
-    console.error('AI目录提取错误:', error);
-    showStatus(`AI目录提取失败: ${error.message || '未知错误'}`, 'error');
+    console.error('AI需求提取错误:', error);
+    showStatus(`AI需求提取失败: ${error.message || '未知错误'}`, 'error');
   } finally {
     loading.value = false;
+    extracting.value = false;
   }
 };
+
+// 组件挂载后自动开始提取
+onMounted(() => {
+  console.log('RequirementCandidates组件挂载，文件ID:', props.fileId);
+});
 
 // 显示状态消息
 const showStatus = (message, type = 'info') => {

@@ -7,7 +7,7 @@ from flask import Flask, Response, jsonify
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.serving import run_simple
 from werkzeug.wrappers import Request
-from app.documentReview.ConfigurationItem.api import app as config_app
+from app.documentReview.ConfigurationItem.configurationItem import app as config_app
 from app.documentReview.Regression.api import app as regression_app
 
 # 配置日志

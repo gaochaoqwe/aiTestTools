@@ -1,18 +1,13 @@
 """
-需求审查模块
-使用AI模型API对需求进行自动审查，支持OpenAI和Ollama API
+兼容性中转层：所有需求审查相关接口均已迁移到 review 目录下
+建议新代码直接引用 review.review_logic、review.review_validate 等模块
 """
-import os
-import logging
-import json
-import requests
-from openai import OpenAI
-
-# 导入配置模块
-from app.documentReview.ConfigurationItem.config import get_config
-
-# 配置日志
-logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(message)s')
+from app.documentReview.ConfigurationItem.review.review_logic import (
+    review_requirement, review_requirements, generate_review_document, generate_review_doc
+)
+from app.documentReview.ConfigurationItem.review.review_validate import validate_model
+from app.documentReview.ConfigurationItem.review.review_client import get_client
+from app.documentReview.ConfigurationItem.review.review_ai import call_openai_api, call_ollama_api, call_direct_http_api
 
 def get_client():
     """
@@ -779,132 +774,8 @@ def generate_review_doc(review_results, output_path, format_type="json"):
     logging.info(f"需求审查文档生成完成: {output_path}")
     return output_path
 
-def validate_model():
-    """
-    验证当前配置的模型是否可以正常使用
-    
-    返回:
-        str: 模型的响应内容
-    """
-    logging.info("开始验证模型配置")
-    config = get_config()
-    provider = config.get("provider", "openai")
-    
-    # 准备验证提示和参数
-    prompt = "你好，请简单回复一句问候语，验证模型连接正常。"
-    
-    # 获取模型参数
-    model_params = config.get("model_params", {})
-    temperature = model_params.get("temperature", 0.7)
-    max_tokens = 100  # 对于验证，使用较小的max_tokens
-    
-    # 根据提供商类型调用不同的API
-    try:
-        if provider == "openai":
-            openai_config = config.get("openai", {})
-            model_name = openai_config.get("model_name", "gpt-4o")
-            api_key = openai_config.get("api_key", "")
-            base_url = openai_config.get("base_url", "")
-            
-            # 调试模式：显示完整API密钥以便排查问题
-            logging.info(f"OpenAI配置 - 模型: {model_name}")
-            logging.info(f"完整API密钥【调试用】: '{api_key}'")
-            logging.info(f"基础URL: {base_url}")
-            logging.info(f"模型参数 - 温度: {temperature}, 最大令牌数: {max_tokens}")
-            
-            # 记录详细的请求参数，用于调试
-            is_third_party_api = (
-                "siliconflow" in base_url or 
-                "glm" in base_url.lower() or 
-                "qwen" in base_url.lower() or 
-                "zhipu" in base_url.lower()
-            )
-            
-            request_info = {
-                "provider": provider,
-                "model": model_name,
-                "api_key_prefix": api_key[:4] if api_key else "",
-                "api_key_length": len(api_key) if api_key else 0,
-                "base_url": base_url,
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-                "prompt_length": len(prompt),
-                "prompt_preview": prompt[:30],
-                "is_third_party_api": is_third_party_api
-            }
-            logging.info(f"OpenAI请求参数: {json.dumps(request_info, ensure_ascii=False)}")
-            
-            # 直接使用OpenAI库
-            try:
-                # 尝试使用OpenAI库
-                logging.info("使用OpenAI库进行验证")
-                client = get_client()
-                if not client:
-                    raise ValueError("无法创建OpenAI客户端")
-                
-                system_message = "你是一名专业的需求分析专家，擅长发现需求文档中的问题。"
-                messages = [
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": prompt}
-                ]
-                
-                # 记录实际的请求参数
-                request_params = {
-                    'model': model_name,
-                    'messages': messages,
-                    'temperature': temperature,
-                    'max_tokens': max_tokens
-                }
-                logging.info(f"OpenAI API请求参数: {json.dumps(request_params, ensure_ascii=False)}")
-                
-                response = client.chat.completions.create(
-                    model=model_name,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens
-                )
-                
-                # 提取回答内容
-                content = response.choices[0].message.content
-                
-                logging.info(f"OpenAI模型验证成功，返回: {content}")
-                return {"success": True, "response": content}
-            except Exception as e:
-                # 记录详细的错误信息
-                error_str = str(e)
-                full_error = getattr(e, 'response', None)
-                if full_error:
-                    try:
-                        # 尝试从响应中提取更多错误信息
-                        response_json = full_error.json()
-                        logging.error(f"OpenAI API完整错误响应: {json.dumps(response_json, ensure_ascii=False)}")
-                        if 'error' in response_json:
-                            error_str = f"{response_json['error'].get('message', error_str)}"
-                    except Exception as parse_err:
-                        logging.error(f"解析错误响应失败: {str(parse_err)}")
-                
-                # 检查错误类型并提供更友好的提示
-                if "401" in error_str:
-                    err_msg = f"Error code: 401 - API密钥无效或认证失败, 请检查API密钥和基础URL设置。详细信息: {error_str}"
-                elif "404" in error_str:
-                    err_msg = f"Error code: 404 - 请求的资源不存在, 请检查API基础URL和模型名称设置。详细信息: {error_str}"
-                elif "429" in error_str:
-                    err_msg = f"Error code: 429 - 请求过于频繁或超出配额, 请稍后再试。详细信息: {error_str}"
-                elif "500" in error_str or "502" in error_str or "503" in error_str:
-                    err_msg = f"Error code: {error_str[:3]} - 服务器错误, 请稍后再试。详细信息: {error_str}"
-                else:
-                    err_msg = f"模型请求失败: {error_str}"
-                
-                logging.error(f"模型验证失败: {err_msg}")
-                return {"success": False, "error": err_msg}
-        elif provider == "ollama":
-            # Ollama API调用逻辑
-            pass
-        else:
-            raise ValueError(f"不支持的模型提供商: {provider}")
-    except Exception as e:
-        logging.error(f"模型验证失败: {e}")
-        raise
+# validate_model 业务已迁移到 review/review_validate.py
+# 如需使用请从 app.documentReview.ConfigurationItem.review.review_validate 导入
 
 if __name__ == "__main__":
     # 测试代码

@@ -36,18 +36,6 @@
         @extract-success="handleExtractSuccess" 
       />
       
-      <!-- 第三步：选择需求候选项 -->
-      <RequirementCandidates 
-        v-if="candidatesSectionVisible" 
-        :candidates="requirementCandidates"
-        :sessionId="currentSessionId"
-        :fileId="documentFileId"
-        :fileName="documentFileName"
-        :catalogFileId="catalogFileId"
-        :catalogFileName="catalogFileName"
-        @extract-complete="handleExtractComplete" 
-      />
-      
       <!-- 第四步：查看和导出需求 -->
       <ExtractedRequirements 
         v-if="requirementsSectionVisible" 
@@ -62,7 +50,7 @@
 import { ref } from 'vue';
 import FileUpload from '../components/FileUpload.vue';
 import CatalogUpload from '../components/CatalogUpload.vue';
-import RequirementCandidates from '../components/RequirementCandidates.vue';
+
 import ExtractedRequirements from '../components/ExtractedRequirements.vue';
 
 // 文件状态
@@ -73,18 +61,17 @@ const currentFileExt = ref('');  // 保存文件扩展名
 // 文档文件和目录文件状态
 const documentFileId = ref('');
 const documentFileName = ref('document.docx');
-const catalogFileId = ref('');
-const catalogFileName = ref('docx');
+
 
 // 需求处理状态
-const requirementCandidates = ref([]);
+
 const extractedRequirements = ref([]);
 const currentSessionId = ref('');
 
 // 页面区域可见性
 const uploadSectionVisible = ref(true);
 const extractSectionVisible = ref(false);
-const candidatesSectionVisible = ref(false);
+
 const requirementsSectionVisible = ref(false);
 
 // 处理文件上传成功事件
@@ -96,34 +83,15 @@ function handleFileUploadSuccess(data) {
   extractSectionVisible.value = true;
 }
 
-// 处理需求候选项提取成功事件
+// 处理需求提取成功事件
 function handleExtractSuccess(data) {
-  console.log('文档审查视图收到需求候选项:', data);
-  requirementCandidates.value = data.requirementCandidates;
-  
-  // 保存会话ID
+  // 假设 data.extractedRequirements, data.sessionId
+  extractedRequirements.value = data.extractedRequirements || [];
   if (data.sessionId) {
     currentSessionId.value = data.sessionId;
-    console.log(`设置会话ID: ${data.sessionId}`);
   }
-  
-  // 使用当前文件ID来设置文档文件ID
-  documentFileId.value = currentFileId.value;
-  documentFileName.value = currentFileName.value || 'document.docx';
-  
-  // 保存目录文件ID和文件名
-  if (data.catalogFileId) {
-    catalogFileId.value = data.catalogFileId;
-    console.log(`设置目录文件ID: ${data.catalogFileId}`);
-  }
-  
-  if (data.catalogFileName) {
-    catalogFileName.value = data.catalogFileName;
-  } else {
-    catalogFileName.value = 'docx';
-  }
-  
-  candidatesSectionVisible.value = true;
+  extractSectionVisible.value = false;
+  requirementsSectionVisible.value = true;
 }
 
 // 处理需求详情提取完成事件

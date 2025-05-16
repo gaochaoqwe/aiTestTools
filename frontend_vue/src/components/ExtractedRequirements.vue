@@ -31,7 +31,7 @@
     <RequirementReview
       v-if="showReview"
       :requirements="requirements"
-      :sessionId="sessionId"
+      :sessionId="getSessionId()"
       :showReview="showReview"
       :apiService="props.apiService"
       ref="reviewComponent"
@@ -69,13 +69,29 @@ const props = defineProps({
   },
   sessionId: {
     type: String,
-    required: true
+    default: ''
+  },
+  fileId: {
+    type: String,
+    default: ''
+  },
+  fileName: {
+    type: String,
+    default: ''
   },
   apiService: {
     type: Object,
     required: true
   }
 });
+
+// 生成一个组件级别的会话ID，用于在未提供sessionId的情况下
+const internalSessionId = ref('');
+
+// 获取有效的会话ID（优先使用props中的，如果没有则使用内部生成的）
+const getSessionId = () => {
+  return props.sessionId || internalSessionId.value;
+};
 
 // 调试查看接收到的内容
 onMounted(() => {
@@ -85,6 +101,12 @@ onMounted(() => {
     console.log('内容类型：', typeof props.requirements[0].content);
     console.log('内容长度：', props.requirements[0].content.length);
     console.log('内容前50个字符：', props.requirements[0].content.substring(0, 50));
+  }
+  
+  // 如果没有提供sessionId，生成一个内部使用的ID
+  if (!props.sessionId) {
+    internalSessionId.value = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10);
+    console.log('未提供sessionId，已生成内部会话ID:', internalSessionId.value);
   }
 });
 
@@ -130,7 +152,7 @@ async function rematchRequirements() {
     const requestData = {
       file_id: props.fileId,
       file_name: props.fileName,
-      session_id: props.sessionId
+      session_id: getSessionId()
     };
     
     // 调用API
@@ -175,7 +197,7 @@ async function generateExcel(excelType) {
     try {
       // 使用generate_excel端点
       const data = await props.apiService.generateExcel({
-        session_id: props.sessionId,
+        session_id: getSessionId(),
         excel_type: excelType
       });
       
@@ -188,7 +210,7 @@ async function generateExcel(excelType) {
         return;
       } else if (excelType !== 'review') {
         showStatus(`${typeText}生成成功，准备下载...`, 'success');
-        window.location.href = props.apiService.getExcelDownloadUrl(props.sessionId, excelType);
+        window.location.href = props.apiService.getExcelDownloadUrl(getSessionId(), excelType);
         return;
       }
     } catch (error) {
@@ -197,7 +219,7 @@ async function generateExcel(excelType) {
     
     // 如果常规导出失败，尝试使用审查文档API
     const reviewData = await props.apiService.generateReviewDocument({
-      session_id: props.sessionId,
+      session_id: getSessionId(),
       excel_type: excelType
     });
     

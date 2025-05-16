@@ -212,6 +212,23 @@ export const configurationItemService = {
       console.error('AI目录提取错误:', error);
       throw error;
     }
+  },
+  
+  // 直接AI提取需求（不需要目录文件）
+  extractRequirementsWithAI: async (params) => {
+    try {
+      console.log('直接调用AI提取需求:', params.file_id, params.file_name, '需求级别:', params.requirement_level);
+      const response = await axios.post(`${API_BASE_URL}/ai_extract`, {
+        file_id: params.file_id,
+        file_name: params.file_name,
+        requirement_level: params.requirement_level || 3,
+        model: params.model || null
+      });
+      return response.data;
+    } catch (error) {
+      console.error('直接AI提取需求错误:', error);
+      throw error;
+    }
   }
 };
 
