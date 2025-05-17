@@ -8,7 +8,7 @@ import json
 import logging
 from docx import Document
 
-from .api import query_ai_model
+from .ai_extraction_logic import query_ai_model
 from .client import get_client
 from .prompts import (
     EXTRACTION_PROMPT_TEMPLATE, 

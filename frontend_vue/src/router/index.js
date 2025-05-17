@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import StaticAnalysis from '../views/StaticAnalysis.vue'
-import CodeReview from '../views/CodeReview.vue'
-import ModelConfigView from '../views/ModelConfigView.vue'
-import DocumentReviewContainer from '../views/DocumentReviewContainer.vue'
-import ConfigurationItemTest from '../views/ConfigurationItemTest.vue'
-import RegressionTest from '../views/RegressionTest.vue'
+import StaticAnalysis from '../views/staticAnalysis/StaticAnalysis.vue'
+import CodeReview from '../views/codeReview/CodeReview.vue'
+import ModelConfigView from '../views/modelConfig/ModelConfigView.vue'
+import DocumentReviewContainer from '../views/documentReview/DocumentReviewContainer.vue';
+import ConfigurationItemTest from '../views/documentReview/configurationItem/ConfigurationItemTest.vue';
+import { h } from 'vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,10 +27,9 @@ const router = createRouter({
         },
         {
           path: 'regression',
-          name: 'regression-test',
-          component: RegressionTest,
-          meta: { type: 'regression' }
-        }
+          name: 'RegressionPlaceholder',
+          component: { render() { return h('div', { style: 'padding: 48px; text-align: center; color: #aaa; font-size: 20px;' }, '回归测试页面暂未开放'); } }
+        },
       ]
     },
     {

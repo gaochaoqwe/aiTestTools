@@ -6,7 +6,7 @@ import logging
 import tiktoken
 from docx import Document
 from .client import get_client
-from .api import query_ai_model
+from .ai_extraction_logic import query_ai_model
 from .utils import extract_json_from_text, extract_req_identifier
 
 def find_last_matched_position(paragraphs, last_requirement_content, fuzzy_match=True):

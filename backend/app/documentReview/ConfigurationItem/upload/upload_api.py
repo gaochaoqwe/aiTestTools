@@ -22,7 +22,9 @@ def upload_file():
     """
     upload_folder = current_app.config.get('UPLOAD_FOLDER')
     if not upload_folder:
-        upload_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'uploads', 'configuration_item')
+        # 修正为项目根目录下 uploads/configuration_item
+        project_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
+        upload_folder = os.path.join(project_root, 'uploads', 'configuration_item')
         os.makedirs(upload_folder, exist_ok=True)
     
     # Use current_app's logger if available, otherwise default to root logger
