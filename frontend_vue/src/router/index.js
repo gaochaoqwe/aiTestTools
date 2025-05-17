@@ -6,6 +6,11 @@ import DocumentReviewContainer from '../views/documentReview/DocumentReviewConta
 import ConfigurationItemTest from '../views/documentReview/configurationItem/ConfigurationItemTest.vue';
 import { h } from 'vue';
 
+// Import project management views
+import ProjectListView from '../views/projectManagement/ProjectListView.vue';
+import ProjectCreateView from '../views/projectManagement/ProjectCreateView.vue';
+import ProjectDetailView from '../views/projectManagement/ProjectDetailView.vue';
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -46,6 +51,23 @@ const router = createRouter({
       path: '/config',
       name: 'model-config',
       component: ModelConfigView
+    },
+    // Project Management Routes
+    {
+      path: '/project-management',
+      name: 'ProjectList',
+      component: ProjectListView
+    },
+    {
+      path: '/project-management/create',
+      name: 'ProjectCreate',
+      component: ProjectCreateView
+    },
+    {
+      path: '/project-management/:id',
+      name: 'ProjectDetail',
+      component: ProjectDetailView,
+      props: true // Pass route params as props to the component (e.g., id)
     }
   ]
 })

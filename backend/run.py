@@ -9,6 +9,8 @@ from werkzeug.serving import run_simple
 from werkzeug.wrappers import Request
 from app.documentReview.ConfigurationItem.configurationItem import app as config_app
 from app.documentReview.Regression.api import app as regression_app
+from app.projectManagement import pm_app
+from a2wsgi import WSGIMiddleware
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -70,13 +72,15 @@ def welcome():
         "status": "running",
         "apis": {
             "configItem": "/api",
-            "regression": "/regression/api"
+            "regression": "/regression/api",
+            "projectManagement": "/pm_api"
         }
     })
 
 base_application = DispatcherMiddleware(root_app, {
     '/api': config_app,  # 将config_app映射到/api前缀
-    '/regression': regression_app
+    '/regression': regression_app,
+    '/pm_api': WSGIMiddleware(pm_app)
 })
 
 # 定义一个简单的测试中间件，返回请求路径信息
@@ -136,6 +140,7 @@ def print_routes():
     logging.warning("=== DispatcherMiddleware 挂载路径 ===")
     logging.warning("  * /api (config_app)")
     logging.warning("  * /regression (regression_app)")
+    logging.warning("  * /pm_api (projectManagement FastAPI app)")
 
 
 if __name__ == '__main__':

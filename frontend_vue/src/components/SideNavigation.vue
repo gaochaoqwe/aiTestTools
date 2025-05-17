@@ -5,6 +5,12 @@
         <h1>AI测试工具</h1>
       </div>
       <ul class="nav-links">
+        <li>
+          <router-link to="/project-management" :class="{ active: currentRoute.startsWith('/project-management') }">
+            <i class="nav-icon project-icon"></i>
+            <span>项目管理</span>
+          </router-link>
+        </li>
         <li class="has-submenu">
           <div class="nav-item" :class="{ active: isDocumentReviewActive }" @click="toggleDocumentReviewSubmenu">
             <i class="nav-icon doc-icon"></i>
@@ -186,6 +192,10 @@ function toggleDocumentReviewSubmenu() {
 
 .doc-icon {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ecf0f1'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1v5h5v10H6V3h7z'/%3E%3C/svg%3E");
+}
+
+.project-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ecf0f1'%3E%3Cpath d='M10 4H4c-1.11 0-2 .89-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z'/%3E%3C/svg%3E");
 }
 
 .analysis-icon {
