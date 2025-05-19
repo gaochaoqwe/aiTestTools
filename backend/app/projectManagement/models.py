@@ -1,21 +1,13 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..database import Base # Adjusted import path for database.py in app/
-import enum
-
-class ProjectStatusEnum(str, enum.Enum):
-    ACTIVE = "active"
-    ARCHIVED = "archived"
-    COMPLETED = "completed"
 
 class Project(Base):
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    status = Column(SQLEnum(ProjectStatusEnum), default=ProjectStatusEnum.ACTIVE, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

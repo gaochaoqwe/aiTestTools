@@ -15,13 +15,33 @@ def create_new_project(project: schemas.ProjectCreate, db: Session = Depends(get
     """
     Create a new project.
     """
-    db_project_by_name = crud.get_project_by_name(db, name=project.name)
-    if db_project_by_name:
+    import logging
+    import sys
+    import traceback
+    
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG)
+    
+    try:
+        logger.info(f"Attempting to create project with name: {project.name}")
+        db_project_by_name = crud.get_project_by_name(db, name=project.name)
+        
+        if db_project_by_name:
+            logger.warning(f"Project with name '{project.name}' already exists")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Project with name '{project.name}' already exists."
+            )
+            
+        logger.info("Creating new project in database")
+        return crud.create_project(db=db, project=project)
+    except Exception as e:
+        logger.error(f"Error creating project: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Project with name '{project.name}' already exists."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating project: {str(e)}"
         )
-    return crud.create_project(db=db, project=project)
 
 @router.get("/", response_model=List[schemas.Project])
 def read_all_projects(

@@ -16,9 +16,7 @@ def get_projects(
 
 def create_project(db: Session, project: schemas.ProjectCreate) -> models.Project:
     db_project = models.Project(
-        name=project.name,
-        description=project.description,
-        status=project.status
+        name=project.name
     )
     db.add(db_project)
     db.commit()

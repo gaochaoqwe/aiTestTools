@@ -1,6 +1,5 @@
 <template>
   <div class="step-content">
-    <h3 class="step-title">第一步: 上传需求规格文档</h3>
     <FileUpload 
       :uploadUrl="uploadUrl"
       :fileTypes="['doc', 'docx']"

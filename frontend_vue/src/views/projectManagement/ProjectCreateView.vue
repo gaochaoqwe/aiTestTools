@@ -1,28 +1,16 @@
 <template>
   <div class="project-create-view">
-    <h1>Create New Project</h1>
+    <div class="header-row">
+      <h1>新建项目</h1>
+    </div>
     <form @submit.prevent="submitCreateProject" class="project-form">
       <div class="form-group">
-        <label for="projectName">Project Name</label>
-        <input type="text" id="projectName" v-model="project.name" class="form-control" required maxlength="100">
-      </div>
-
-      <div class="form-group">
-        <label for="projectDescription">Description (Optional)</label>
-        <textarea id="projectDescription" v-model="project.description" class="form-control" rows="3"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="projectStatus">Status</label>
-        <select id="projectStatus" v-model="project.status" class="form-control">
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="completed">Completed</option>
-        </select>
+        <label for="projectName">项目名称</label>
+        <input type="text" id="projectName" v-model="project.name" class="form-control" required maxlength="100" placeholder="请输入项目名称">
       </div>
 
       <div v-if="error" class="error-message">
-        <p>Error creating project: {{ error.message || error }}</p>
+        <p>创建失败: {{ error.message || error }}</p>
       </div>
       
       <div v-if="successMessage" class="success-message">
@@ -31,10 +19,10 @@
 
       <div class="form-actions">
         <button type="submit" class="btn btn-primary" :disabled="submitting">
-          {{ submitting ? 'Creating...' : 'Create Project' }}
+          {{ submitting ? '创建中...' : '创建项目' }}
         </button>
         <button type="button" @click="goBack" class="btn btn-secondary" :disabled="submitting">
-          Cancel
+          取消
         </button>
       </div>
     </form>
@@ -52,8 +40,6 @@ export default {
     return {
       project: {
         name: '',
-        description: '',
-        status: 'active', // Default status
       },
       submitting: false,
       error: null,
@@ -86,8 +72,6 @@ export default {
     resetForm() {
       this.project = {
         name: '',
-        description: '',
-        status: 'active',
       };
     },
     goBack() {
@@ -99,107 +83,141 @@ export default {
 
 <style scoped>
 .project-create-view {
-  max-width: 600px;
-  margin: 20px auto;
-  padding: 20px;
-  background-color: #f9f9f9;
+  padding: 32px 36px 0 36px;
+  background: #f6f8fa;
+  min-height: 100vh;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.header-row h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.project-form {
+  max-width: 680px;
+  background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 24px 28px;
 }
 
 .project-form .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
 }
 
 .project-form label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #333;
 }
 
 .project-form .form-control {
   width: 100%;
-  padding: 0.5rem;
+  padding: 10px 12px;
   font-size: 1rem;
   line-height: 1.5;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  box-sizing: border-box; /* Ensures padding doesn't affect overall width */
+  border: 1px solid #e0e6ed;
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.project-form .form-control:focus {
+  border-color: #409eff;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+  outline: none;
 }
 
 .project-form textarea.form-control {
   resize: vertical;
+  min-height: 100px;
+}
+
+.project-form select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 20px;
+  padding-right: 30px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
 }
 
 .form-actions button {
-  margin-right: 10px;
+  min-width: 100px;
 }
 
 .error-message {
-  color: #dc3545; /* Bootstrap's danger color */
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-  border: 1px solid transparent;
-  border-radius: 0.25rem;
+  color: #e74c3c;
+  background-color: #fdecea;
+  border-left: 4px solid #e74c3c;
+  padding: 12px 16px;
+  margin: 16px 0;
+  border-radius: 4px;
 }
 
 .success-message {
-  color: #155724; /* Bootstrap's success color */
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-  border: 1px solid transparent;
-  border-radius: 0.25rem;
+  color: #27ae60;
+  background-color: #eafaf1;
+  border-left: 4px solid #2ecc71;
+  padding: 12px 16px;
+  margin: 16px 0;
+  border-radius: 4px;
 }
 
-/* Basic Bootstrap-like styling for buttons if Bootstrap is not globally available */
 .btn {
   display: inline-block;
-  font-weight: 400;
-  color: #212529;
+  font-weight: 500;
+  color: #fff;
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
   user-select: none;
-  background-color: transparent;
-  border: 1px solid transparent;
-  padding: 0.375rem 0.75rem;
+  border: none;
+  padding: 8px 22px;
   font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 0.25rem;
-  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  border-radius: 4px;
+  transition: background 0.2s;
+  outline: none;
 }
 
 .btn-primary {
-  color: #fff;
-  background-color: #007bff;
-  border-color: #007bff;
+  background-color: #409eff;
 }
 
 .btn-primary:hover {
-  color: #fff;
-  background-color: #0056b3;
-  border-color: #0056b3;
+  background-color: #337ecc;
 }
 
 .btn-primary:disabled {
-  background-color: #007bff;
-  border-color: #007bff;
-  opacity: 0.65;
+  background-color: #a0cfff;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
+  background-color: #909399;
 }
 
 .btn-secondary:hover {
-  color: #fff;
-  background-color: #545b62;
-  border-color: #545b62;
+  background-color: #666;
+}
+
+.btn-secondary:disabled {
+  background-color: #c8c9cc;
+  cursor: not-allowed;
 }
 </style>

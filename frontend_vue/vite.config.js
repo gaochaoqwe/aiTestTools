@@ -15,4 +15,23 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    proxy: {
+      '/pm_api': {
+        target: 'http://localhost:5002',
+        changeOrigin: true,
+        secure: false
+      },
+      '/api': {
+        target: 'http://localhost:5002',
+        changeOrigin: true,
+        secure: false
+      },
+      '/regression': {
+        target: 'http://localhost:5002',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
 })

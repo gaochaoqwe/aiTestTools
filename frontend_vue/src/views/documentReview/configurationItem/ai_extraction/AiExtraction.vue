@@ -1,6 +1,5 @@
 <template>
   <div class="step-content">
-    <h3 class="step-title">第二步: AI提取需求</h3>
     <div class="ai-extract-panel">
   <h4>AI智能提取需求</h4>
   <el-button type="primary" @click="handleAIExtract" :loading="extracting">

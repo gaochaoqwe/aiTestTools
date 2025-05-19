@@ -1,26 +1,6 @@
 <template>
   <div class="document-review-container">
-    <h2>文档审查</h2>
-    
-    <!-- 二级导航 -->
-    <div class="sub-navigation">
-      <router-link 
-        to="/document-review/configuration-item" 
-        class="sub-nav-item"
-        :class="{ active: $route.path === '/document-review/configuration-item' }"
-      >
-        配置项测试
-      </router-link>
-      <router-link 
-        to="/document-review/configuration-item" 
-        class="sub-nav-item"
-        :class="{ active: $route.path === '/document-review/configuration-item' }"
-      >
-        回归测试
-      </router-link>
-    </div>
-    
-    <!-- 子路由内容将在这里渲染 -->
+    <!-- 子路由内容直接渲染，不显示标题和二级导航 -->
     <router-view />
   </div>
 </template>

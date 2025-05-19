@@ -1,6 +1,5 @@
 <template>
   <div class="step-content">
-    <h3 class="step-title">第三步: AI文档审查</h3>
     <RequirementReview
       :requirements="extractionResults"
       :sessionId="currentSessionId"

@@ -10,7 +10,7 @@ from werkzeug.wrappers import Request
 from app.documentReview.ConfigurationItem.configurationItem import app as config_app
 from app.documentReview.Regression.api import app as regression_app
 from app.projectManagement import pm_app
-from a2wsgi import WSGIMiddleware
+from a2wsgi import ASGIMiddleware
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -80,7 +80,7 @@ def welcome():
 base_application = DispatcherMiddleware(root_app, {
     '/api': config_app,  # 将config_app映射到/api前缀
     '/regression': regression_app,
-    '/pm_api': WSGIMiddleware(pm_app)
+    '/pm_api': ASGIMiddleware(pm_app)
 })
 
 # 定义一个简单的测试中间件，返回请求路径信息
